@@ -73,7 +73,27 @@ def call_gemini_for_category(symptom_text: str) -> str:
     if not gemini_model:
         return "General"
 
-    prompt = f"Classify the symptom '{symptom_text}' into one category: General, Emergency, or Mental Health. Respond with only the category name."
+    prompt = """
+        You are a highly trained AI medical triage assistant. Your only job is to classify symptoms into ONE of the following three medical categories:
+
+        1. General:
+        - Non-urgent conditions such as: fever, cold, cough, sore throat, minor injuries, headaches, stomach pain, body aches, skin rashes, fatigue, nausea, diarrhea, constipation, menstrual cramps, acidity, back pain, etc.
+
+        2. Emergency:
+        - Life-threatening or urgent conditions such as: chest pain, difficulty breathing, seizures, stroke symptoms (face drooping, arm weakness, speech difficulty), unconsciousness, high fever in infants, severe allergic reactions, heavy bleeding, fractures, serious burns, poisoning, head trauma, vision loss, etc.
+
+        3. Mental Health:
+        - Psychological or behavioral symptoms such as: sadness, depression, suicidal thoughts, self-harm, anxiety, panic attacks, mood swings, hallucinations, delusions, anger issues, insomnia, social withdrawal, emotional numbness, PTSD, eating disorders, substance abuse, etc.
+
+        Instructions:
+        - Return only ONE of these: "General", "Emergency", or "Mental Health".
+        - Be very strict. Do NOT default to "General" if the symptoms match Emergency or Mental Health.
+        - NO extra words. Only return the category in **one word**.
+
+        Now classify the following symptom:
+        Symptom: {user_input}
+        Category:
+        """
 
     try:
         # Preferred: try the model wrapper if available
@@ -196,11 +216,7 @@ def classify_symptom_node(state: Dict[str, Any]) -> Dict[str, Any]:
             break
 
         # Method 2: Word overlap check (≥50% of cached words match input)
-        cached_words = set(re.findall(r"\w+", cs_lower))
-        input_words = set(re.findall(r"\w+", symptom_text))
-        if cached_words and (len(cached_words & input_words) / len(cached_words) >= 0.5):
-            found_category = cached_category
-            break
+
 
     if found_category:
         category = found_category
